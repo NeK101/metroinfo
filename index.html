@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>지하철 정보 조회</title>
 
-  <!-- 빈 favicon으로 404 제거 -->
+  <!-- 빈 favicon 으로 404 제거 -->
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -16,13 +16,13 @@
   </header>
 
   <main>
-    <!-- 1) 역 검색 & 자동완성 -->
+    <!-- 역 검색 & 자동완성 -->
     <section class="search">
       <input id="stationInput" placeholder="역명을 입력하세요" autocomplete="off" />
       <ul id="suggestions"></ul>
     </section>
 
-    <!-- 2) 옵션: 요일 / 방향 -->
+    <!-- 요일/방향 선택 -->
     <section class="options">
       <select id="daySelect">
         <option value="1">평일</option>
@@ -35,11 +35,11 @@
       </select>
     </section>
 
-    <!-- 3) 결과 -->
+    <!-- 결과 표시 -->
     <section id="result"></section>
   </main>
 
-  <!-- defer로 DOM 로드 후 실행 -->
+  <!-- defer 로 DOM 완전 로드 후 실행 -->
   <script src="script.js" defer></script>
 </body>
 </html>
