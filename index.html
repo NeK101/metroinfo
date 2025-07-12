@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>서울 지하철 실시간 & 시간표 조회</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>지하철 정보 조회</h1>
+  </header>
+
+  <main>
+    <!-- 역 검색 & 자동완성 -->
+    <section class="search">
+      <input id="stationInput" placeholder="역명을 입력하세요" autocomplete="off" />
+      <ul id="suggestions"></ul>
+    </section>
+
+    <!-- 옵션: 호선 / 요일 / 방향 -->
+    <section class="options">
+      <select id="lineSelect">
+        <option value="">호선 선택</option>
+        <option value="1">1호선</option>
+        <option value="2">2호선</option>
+        <option value="3">3호선</option>
+        <option value="4">4호선</option>
+        <option value="5">5호선</option>
+        <option value="6">6호선</option>
+        <option value="7">7호선</option>
+        <option value="8">8호선</option>
+        <option value="9">9호선</option>
+      </select>
+      <select id="daySelect">
+        <option value="1">평일</option>
+        <option value="2">토요일</option>
+        <option value="3">휴일/일요일</option>
+      </select>
+      <select id="dirSelect">
+        <option value="1">상행(내선)</option>
+        <option value="2">하행(외선)</option>
+      </select>
+    </section>
+
+    <!-- 결과 출력 -->
+    <section id="result"></section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
