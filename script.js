@@ -1,7 +1,7 @@
 // script.js
 
 // Netlify Functions 프록시 URL
-const PROXY = 'https://astounding-phoenix-89f0d8.netlify.app/.netlify/functions/proxy?target=';
+const PROXY = '/.netlify/functions/proxy?target=';
 
 // API 키
 const ALL_ARRIVAL   = '4a785a444d6e656f3132306e5371775a';
