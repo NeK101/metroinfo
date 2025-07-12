@@ -166,5 +166,4 @@ document.addEventListener('DOMContentLoaded', () => {
   // 헬퍼: select 값 → 텍스트
   function getDayText(v)  { return {'1':'평일','2':'토요일','3':'휴일/일요일'}[v]; }
   function getDirText(v)  { return {'1':'상행(내선)','2':'하행(외선)'}[v]; }
-
-}); // DOMContentLoaded end
+});
