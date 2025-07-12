@@ -5,10 +5,18 @@ body {
   color: #333;
 }
 header {
+  position: relative;
   background: #0052A4;
   color: #fff;
   padding: 1rem;
   text-align: center;
+}
+header .version {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.85rem;
+  color: #ffc;
 }
 main {
   max-width: 600px;
