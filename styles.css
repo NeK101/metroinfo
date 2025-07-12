@@ -15,7 +15,7 @@ header .version {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  font-size: 0.85rem;
+  font-size: .85rem;
   color: #ffc;
 }
 main {
@@ -76,27 +76,30 @@ main {
 #result ul { list-style: disc inside; }
 #result li { margin-bottom: .25rem; }
 
-/* 라인 배지 기본: 검은 배경 */
+/* 라인 배지 공통 */
 .line-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.2rem;
+  min-width: 1.2rem;
+  padding: 0 .3rem;      /* 숫자 외 텍스트도 읽히도록 여유 주기 */
   height: 1.2rem;
   border-radius: 50%;
-  background: #000;        /* 기본 검은색 */
+  background: #000;       /* 기본 검은 배경 */
   color: #fff;
   font-size: .75rem;
   font-weight: bold;
   margin-right: .5rem;
+  white-space: nowrap;    /* “GTX-A” 같은 텍스트 깨지지 않게 */
 }
-/* 1~9호선 실제 노선색 오버라이드 */
-.line-1 { background: #003478; }  /* 짙은 파랑 */
-.line-2 { background: #009639; }  /* 연녹색 */
-.line-3 { background: #FF7F00; }  /* 주황색 */
-.line-4 { background: #00BFFF; }  /* 하늘색 */
-.line-5 { background: #800080; }  /* 보라색 */
-.line-6 { background: #CD853F; }  /* 황토색 */
-.line-7 { background: #006B3C; }  /* 짙은 녹색 */
-.line-8 { background: #FF1493; }  /* 핑크색 */
-.line-9 { background: #FFD700; }  /* 황금색 */
+
+/* 1~9호선 노선색 오버라이드 */
+.line-1 { background: #003478; }
+.line-2 { background: #009639; }
+.line-3 { background: #FF7F00; }
+.line-4 { background: #00BFFF; }
+.line-5 { background: #800080; }
+.line-6 { background: #CD853F; }
+.line-7 { background: #006B3C; }
+.line-8 { background: #FF1493; }
+.line-9 { background: #FFD700; }
