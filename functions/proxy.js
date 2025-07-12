@@ -1,8 +1,7 @@
-// CommonJS 방식, node-fetch 불러오기
+// functions/proxy.js
 const fetch = require('node-fetch');
 
-exports.handler = async function(event, context) {
-  // ?target=인코딩된_URL
+exports.handler = async function(event) {
   const target = event.queryStringParameters?.target;
   if (!target) {
     return {
@@ -11,9 +10,7 @@ exports.handler = async function(event, context) {
       body: 'Missing target query parameter'
     };
   }
-
   try {
-    // 실제 OpenAPI URL 요청
     const res  = await fetch(decodeURIComponent(target));
     const body = await res.text();
     return {
