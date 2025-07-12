@@ -1,34 +1,34 @@
-// functions/proxy.js
+// CommonJS 방식, node-fetch 불러오기
+const fetch = require('node-fetch');
 
-// Netlify Node.js 18 런타임을 명시
-export const config = { runtime: 'nodejs18.x' };
-
-// CommonJS 가 아닌 ESM 방식으로 내보내기
-export default async function handler(event) {
-  const { target } = event.queryStringParameters || {};
+exports.handler = async function(event, context) {
+  // ?target=인코딩된_URL
+  const target = event.queryStringParameters?.target;
   if (!target) {
     return {
       statusCode: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: 'Missing target query parameter'
     };
   }
+
   try {
-    // 내장 fetch 사용
+    // 실제 OpenAPI URL 요청
     const res  = await fetch(decodeURIComponent(target));
     const body = await res.text();
     return {
       statusCode: res.status,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Content-Type': res.headers.get('content-type') || 'text/plain'
+        'Content-Type':        res.headers.get('content-type') || 'text/plain'
       },
       body
     };
   } catch (err) {
     return {
-      statusCode: 500,
+      statusCode: 502,
       headers: { 'Access-Control-Allow-Origin': '*' },
       body: 'Proxy error: ' + err.message
     };
   }
-}
+};
