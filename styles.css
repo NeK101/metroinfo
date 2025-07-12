@@ -1,3 +1,4 @@
+/* styles.css */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: sans-serif;
@@ -26,74 +27,44 @@ main {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-
 /* 검색창 & 자동완성 */
 .search input {
-  width: 100%;
-  padding: .75rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  width: 100%; padding: .75rem; font-size: 1rem;
+  border: 1px solid #ccc; border-radius: 4px;
 }
 #suggestions {
-  list-style: none;
-  border: 1px solid #ccc;
-  border-top: none;
-  max-height: 200px;
-  overflow-y: auto;
+  list-style: none; border: 1px solid #ccc;
+  border-top: none; max-height: 200px; overflow-y: auto;
 }
 #suggestions li {
-  display: flex;
-  align-items: center;
-  padding: .5rem;
-  cursor: pointer;
+  display: flex; align-items: center;
+  padding: .5rem; cursor: pointer;
 }
-#suggestions li:hover {
-  background: #eef;
-}
-
-/* 옵션 select */
+#suggestions li:hover { background: #eef; }
+/* 옵션 */
 .options {
-  display: flex;
-  gap: .5rem;
-  margin: 1rem 0;
+  display: flex; gap: .5rem; margin: 1rem 0;
 }
 .options select {
-  flex: 1;
-  padding: .5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  flex: 1; padding: .5rem; font-size: 1rem;
+  border: 1px solid #ccc; border-radius: 4px;
 }
-
 /* 결과 */
 #result { margin-top: 1rem; }
 #result h2 { margin-bottom: .5rem; }
 #result h3 {
-  margin: .75rem 0 .25rem;
-  color: #0052A4;
+  margin: .75rem 0 .25rem; color: #0052A4;
 }
 #result ul { list-style: disc inside; }
 #result li { margin-bottom: .25rem; }
-
-/* 라인 배지 공통 */
+/* 라인 배지 */
 .line-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.2rem;
-  padding: 0 .3rem;      /* 숫자 외 텍스트도 읽히도록 여유 주기 */
-  height: 1.2rem;
-  border-radius: 50%;
-  background: #000;       /* 기본 검은 배경 */
-  color: #fff;
-  font-size: .75rem;
-  font-weight: bold;
-  margin-right: .5rem;
-  white-space: nowrap;    /* “GTX-A” 같은 텍스트 깨지지 않게 */
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.2rem; padding: 0 .3rem; height: 1.2rem;
+  border-radius: 50%; background: #000; color: #fff;
+  font-size: .75rem; font-weight: bold; margin-right: .5rem;
+  white-space: nowrap;
 }
-
-/* 1~9호선 노선색 오버라이드 */
 .line-1 { background: #003478; }
 .line-2 { background: #009639; }
 .line-3 { background: #FF7F00; }
