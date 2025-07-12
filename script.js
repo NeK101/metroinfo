@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedStation = { name: null, id: null, lineNo: null };
   let timerId = null;
 
-  // 1) 역 목록 로드
+  // 1) stations.json 로드
   fetch('data/stations.json')
     .then(r => r.json())
     .then(data => {
@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     suggestions.innerHTML = '';
     selectedStation = { name: null, id: null, lineNo: null };
     if (!q) return;
+
     stations
       .filter(s => s.name.includes(q))
       .slice(0, 10)
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resultDiv.innerHTML = '로딩 중...';
 
     try {
-      const [fl, tt, arr, pos] = await Promise.all([
+      const [ fl, tt, arr, pos ] = await Promise.all([
         getFirstLast(id, lineNo, week, dir),
         getTimetable(id, lineNo, week, dir),
         getArrivalAll(name),
@@ -102,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   </li>`;
         }).join('') + `</ul>`;
 
-      // 실시간 위치 (사용자가 입력한 역으로 오는 열차 최대 3개)
+      // 실시간 위치 (사용자가 입력한 역으로 오는 열차, 최대 3개)
       html += `<h3>실시간 위치 (${lineNo}호선)</h3><ul>` +
         pos.map(p =>
           `<li>차량 ${p.trainNo} → ${p.statnNm} (${p.direct==='0'?'상행':'하행'})</li>`
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.arrival-time').forEach(el => {
           let s = parseInt(el.dataset.seconds, 10);
           if (s > 0) el.dataset.seconds = --s;
-          const m = Math.floor(s/60), sec = s % 60;
+          const m = Math.floor(s/60), sec = s%60;
           el.textContent = `${m}분 ${sec}초 후`;
         });
       }, 1000);
@@ -141,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // B) 실시간 위치 (JSON) — 사용자가 입력한 역으로 오는 열차만, 최대 3개
+  // B) 실시간 위치 (JSON)
   async function getPosition(lineNo) {
     const target =
       `http://swopenapi.seoul.go.kr/api/subway/${POSITION_KEY}` +
@@ -149,8 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = await fetch(PROXY + encodeURIComponent(target))
                        .then(r => r.json());
     return (data.realtimePositionList || [])
-      .filter(p => p.statnNm === selectedStation.name)
-      .slice(0, 3)
+      .filter(p => p.statnNm === selectedStation.name)  // 선택 역만
+      .slice(0, 3)                                      // 최대 3개
       .map(p => ({
         trainNo: p.trainNo,
         statnNm: p.statnNm,
@@ -158,11 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
   }
 
-  // C) 시간표 조회 (JSON)
+  // C) 시간표 조회 (JSON, 상위 5개)
   async function getTimetable(stationId, _, weekTag, updnLine) {
     const target =
       `http://openapi.seoul.go.kr:8088/${TIMETABLE_KEY}` +
-      `/json/SearchSTNTimeTableByIDService/1/100/` +
+      `/json/SearchSTNTimeTableByIDService/1/5/` +
       `${stationId}/${updnLine}/${weekTag}`;
     const data = await fetch(PROXY + encodeURIComponent(target))
                        .then(r => r.json());
@@ -174,14 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const target =
       `http://openapi.seoul.go.kr:8088/${FIRSTLAST_KEY}` +
       `/json/SearchFirstAndLastTrainbyLineServiceNew/1/5/` +
-      `${encodeURIComponent(selectedStation.lineNo + '호선')}/` +
+      `${encodeURIComponent(selectedStation.lineNo+'호선')}/` +
       `${weekTag}/${updnLine}/${stationId}`;
     const data = await fetch(PROXY + encodeURIComponent(target))
                        .then(r => r.json());
     const row = data.SearchFirstAndLastTrainbyLineServiceNew?.row?.[0];
     return row
       ? { firstTrain: row.frstTrainTm, lastTrain: row.lstTrainTm }
-      : { firstTrain: '정보 없음',    lastTrain: '정보 없음' };
+      : { firstTrain: '정보 없음',     lastTrain: '정보 없음' };
   }
 
   // 헬퍼
