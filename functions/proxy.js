@@ -1,12 +1,19 @@
 // functions/proxy.js
-const fetch = require('node-fetch');
 
-exports.handler = async function(event) {
+// Netlify Node.js 18 런타임을 명시
+export const config = { runtime: 'nodejs18.x' };
+
+// CommonJS 가 아닌 ESM 방식으로 내보내기
+export default async function handler(event) {
   const { target } = event.queryStringParameters || {};
   if (!target) {
-    return { statusCode: 400, body: 'Missing target query parameter' };
+    return {
+      statusCode: 400,
+      body: 'Missing target query parameter'
+    };
   }
   try {
+    // 내장 fetch 사용
     const res  = await fetch(decodeURIComponent(target));
     const body = await res.text();
     return {
@@ -24,4 +31,4 @@ exports.handler = async function(event) {
       body: 'Proxy error: ' + err.message
     };
   }
-};
+}
