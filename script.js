@@ -1,6 +1,7 @@
 // script.js
-const PROXY = '/.netlify/functions/proxy?target=';
 
+// Netlify Functions 프록시 (상대경로)
+const PROXY = '/.netlify/functions/proxy?target=';
 
 // API 키
 const ALL_ARRIVAL   = '4a785a444d6e656f3132306e5371775a';
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedStation = { name: null, id: null, lineNo: null };
   let timerId = null;
 
-  // 1) 로컬 stations.json 로드
+  // 1) stations.json 로드
   fetch('data/stations.json')
     .then(r => r.json())
     .then(data => {
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
     });
 
-  // 2) 자동완성
+  // 2) 역명 자동완성
   input.addEventListener('input', () => {
     const q = input.value.trim();
     suggestions.innerHTML = '';
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         badge.textContent = s.lineNo;
         li.append(badge, document.createTextNode(s.name));
         li.onclick = () => {
-          selectedStation = { name:s.name, id:s.id, lineNo:s.lineNo };
+          selectedStation = { name: s.name, id: s.id, lineNo: s.lineNo };
           input.value = s.name;
           suggestions.innerHTML = '';
           runFetch();
@@ -107,12 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       resultDiv.innerHTML = html;
 
-      // 남은 시간 카운트다운
+      // 카운트다운 타이머 시작
       timerId = setInterval(() => {
         document.querySelectorAll('.arrival-time').forEach(el => {
           let s = parseInt(el.dataset.seconds, 10);
           if (s > 0) el.dataset.seconds = --s;
-          const m = Math.floor(s/60), sec = s%60;
+          const m = Math.floor(s/60), sec = s % 60;
           el.textContent = `${m}분 ${sec}초 후`;
         });
       }, 1000);
@@ -123,26 +124,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // A) 실시간 도착 ALL (HTTPS)
+  // A) 실시간 도착 ALL (HTTP)
   async function getArrivalAll(stnNm) {
     const target =
-      `https://swopenapi.seoul.go.kr/api/subway/`+
+      `http://swopenapi.seoul.go.kr/api/subway/` +
       `${ALL_ARRIVAL}/xml/realtimeStationArrival/ALL`;
     const res = await fetch(PROXY + encodeURIComponent(target));
     const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml, 'application/xml');
     return Array.from(doc.querySelectorAll('row'))
-      .filter(r => r.querySelector('statnNm')?.textContent === stnNm)
+      .filter(r => r.querySelector('statnNm')?.textContent.includes(stnNm))
       .map(r => ({
         trainLineNm: r.querySelector('trainLineNm')?.textContent || '-',
         leftTime:    Number(r.querySelector('barvlDt')?.textContent) || 0
       }));
   }
 
-  // B) 실시간 위치 (HTTPS)
+  // B) 실시간 위치 (HTTP)
   async function getPosition(lineNo) {
     const target =
-      `https://swopenapi.seoul.go.kr/api/subway/`+
+      `http://swopenapi.seoul.go.kr/api/subway/` +
       `${POSITION_KEY}/xml/realtimePosition/0/100/${lineNo}`;
     const res = await fetch(PROXY + encodeURIComponent(target));
     const xml = await res.text();
@@ -154,11 +155,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // C) 시간표 조회 (HTTPS)
+  // C) 시간표 조회 (HTTP:8088)
   async function getTimetable(stationId, _, weekTag, updnLine) {
     const target =
-      `https://openapi.seoul.go.kr/`+
-      `${TIMETABLE_KEY}/xml/SearchSTNTimeTableByIDService/1/100/`+
+      `http://openapi.seoul.go.kr:8088/` +
+      `${TIMETABLE_KEY}/xml/SearchSTNTimeTableByIDService/1/100/` +
       `${stationId}/${updnLine}/${weekTag}`;
     const res = await fetch(PROXY + encodeURIComponent(target));
     const xml = await res.text();
@@ -170,12 +171,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // D) 첫/막차 조회 (HTTPS)
+  // D) 첫/막차 조회 (HTTP:8088)
   async function getFirstLast(stationId, _, weekTag, updnLine) {
     const target =
-      `https://openapi.seoul.go.kr/`+
-      `${FIRSTLAST_KEY}/xml/SearchFirstAndLastTrainbyLineServiceNew/1/5/`+
-      `${encodeURIComponent(selectedStation.lineNo+'호선')}/`+
+      `http://openapi.seoul.go.kr:8088/` +
+      `${FIRSTLAST_KEY}/xml/SearchFirstAndLastTrainbyLineServiceNew/1/5/` +
+      `${encodeURIComponent(selectedStation.lineNo + '호선')}/` +
       `${weekTag}/${updnLine}/${stationId}`;
     const res = await fetch(PROXY + encodeURIComponent(target));
     const xml = await res.text();
@@ -186,11 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
           firstTrain: row.querySelector('frstTrainTm')?.textContent || '-',
           lastTrain:  row.querySelector('lstTrainTm')?.textContent  || '-'
         }
-      : { firstTrain:'정보 없음', lastTrain:'정보 없음' };
+      : { firstTrain: '정보 없음', lastTrain: '정보 없음' };
   }
 
   // 헬퍼
-  function getDayText(v) { return {'1':'평일','2':'토요일','3':'휴일/일요일'}[v]; }
-  function getDirText(v){ return {'1':'상행(내선)','2':'하행(외선)'}[v]; }
+  function getDayText(v) { return { '1':'평일','2':'토요일','3':'휴일/일요일' }[v]; }
+  function getDirText(v){ return { '1':'상행(내선)','2':'하행(외선)' }[v]; }
 
 }); // DOMContentLoaded 끝
