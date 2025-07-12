@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedStation = { name: null, id: null, lineNo: null };
   let timerId = null;
 
-  // 1) stations.json 로드
+  // 1) 로컬 stations.json 로드
   fetch('data/stations.json')
     .then(r => r.json())
     .then(data => {
@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         name:   item.STATN_NM,
         lineNo: item.호선이름.replace('호선','')
       }));
-    });
+    })
+    .catch(console.error);
 
   // 2) 역명 자동완성
   input.addEventListener('input', () => {
@@ -40,11 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     stations
       .filter(s => s.name.includes(q))
-      .slice(0,10)
+      .slice(0, 10)
       .forEach(s => {
-        const li = document.createElement('li');
+        const li    = document.createElement('li');
         const badge = document.createElement('span');
-        badge.classList.add('line-badge','line-'+s.lineNo);
+        badge.classList.add('line-badge', 'line-' + s.lineNo);
         badge.textContent = s.lineNo;
         li.append(badge, document.createTextNode(s.name));
         li.onclick = () => {
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 
-  // 3) 옵션 변경 시 재조회
+  // 3) 요일/방향 옵션 변경 시 재조회
   [daySelect, dirSelect].forEach(el =>
     el.addEventListener('change', runFetch)
   );
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resultDiv.innerHTML = '로딩 중...';
 
     try {
-      const [ fl, tt, arr, pos ] = await Promise.all([
+      const [fl, tt, arr, pos] = await Promise.all([
         getFirstLast(id, lineNo, week, dir),
         getTimetable(id, lineNo, week, dir),
         getArrivalAll(name),
@@ -94,9 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // 실시간 도착예정 (카운트다운)
       html += `<h3>실시간 도착예정</h3><ul>` +
         arr.slice(0,5).map(a => {
-          const secs = a.leftTime;
-          return `<li>${a.trainLineNm} / <span class="arrival-time" data-seconds="${secs}">
-                    ${Math.floor(secs/60)}분 ${secs%60}초 후
+          const s = a.leftTime;
+          return `<li>${a.trainLineNm} / <span class="arrival-time" data-seconds="${s}">
+                    ${Math.floor(s/60)}분 ${s%60}초 후
                   </span></li>`;
         }).join('') + `</ul>`;
 
@@ -108,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       resultDiv.innerHTML = html;
 
-      // 카운트다운 타이머 시작
+      // 남은 시간 카운트다운
       timerId = setInterval(() => {
         document.querySelectorAll('.arrival-time').forEach(el => {
           let s = parseInt(el.dataset.seconds, 10);
@@ -124,70 +125,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // A) 실시간 도착 ALL (HTTP)
+  // ─── JSON 엔드포인트 사용 ───────────────────
+
+  // A) 실시간 도착예정 (JSON)
   async function getArrivalAll(stnNm) {
     const target =
-      `http://swopenapi.seoul.go.kr/api/subway/` +
-      `${ALL_ARRIVAL}/xml/realtimeStationArrival/ALL`;
-    const res = await fetch(PROXY + encodeURIComponent(target));
-    const xml = await res.text();
-    const doc = new DOMParser().parseFromString(xml, 'application/xml');
-    return Array.from(doc.querySelectorAll('row'))
-      .filter(r => r.querySelector('statnNm')?.textContent.includes(stnNm))
-      .map(r => ({
-        trainLineNm: r.querySelector('trainLineNm')?.textContent || '-',
-        leftTime:    Number(r.querySelector('barvlDt')?.textContent) || 0
-      }));
+      `http://swopenapi.seoul.go.kr/api/subway/${ALL_ARRIVAL}` +
+      `/json/realtimeStationArrival/0/20/${encodeURIComponent(stnNm)}`;
+    const data = await fetch(PROXY + encodeURIComponent(target))
+                      .then(r => r.json());
+    return (data.realtimeArrivalList || []).map(a => ({
+      trainLineNm: a.trainLineNm,
+      leftTime:    Number(a.barvlDt) || 0
+    }));
   }
 
-  // B) 실시간 위치 (HTTP)
+  // B) 실시간 위치 (JSON)
   async function getPosition(lineNo) {
     const target =
-      `http://swopenapi.seoul.go.kr/api/subway/` +
-      `${POSITION_KEY}/xml/realtimePosition/0/100/${lineNo}`;
-    const res = await fetch(PROXY + encodeURIComponent(target));
-    const xml = await res.text();
-    const doc = new DOMParser().parseFromString(xml, 'application/xml');
-    return Array.from(doc.querySelectorAll('row')).map(r => ({
-      trainNo: r.querySelector('trainNo')?.textContent || '-',
-      statnNm: r.querySelector('statnNm')?.textContent || '-',
-      direct:  r.querySelector('direct')?.textContent  || '-'
+      `http://swopenapi.seoul.go.kr/api/subway/${POSITION_KEY}` +
+      `/json/realtimePosition/0/100/${lineNo}`;
+    const data = await fetch(PROXY + encodeURIComponent(target))
+                      .then(r => r.json());
+    return (data.realtimePositionList || []).map(p => ({
+      trainNo: p.trainNo,
+      statnNm: p.statnNm,
+      direct:  p.direct
     }));
   }
 
-  // C) 시간표 조회 (HTTP:8088)
+  // C) 시간표 조회 (JSON)
   async function getTimetable(stationId, _, weekTag, updnLine) {
     const target =
-      `http://openapi.seoul.go.kr:8088/` +
-      `${TIMETABLE_KEY}/xml/SearchSTNTimeTableByIDService/1/100/` +
+      `http://openapi.seoul.go.kr:8088/${TIMETABLE_KEY}` +
+      `/json/SearchSTNTimeTableByIDService/1/100/` +
       `${stationId}/${updnLine}/${weekTag}`;
-    const res = await fetch(PROXY + encodeURIComponent(target));
-    const xml = await res.text();
-    const doc = new DOMParser().parseFromString(xml, 'application/xml');
-    return Array.from(doc.querySelectorAll('row')).map(r => ({
-      TRAIN_NO:      r.querySelector('trainNo')?.textContent,
-      SUBWAY_STA_NM: r.querySelector('subwayStaNm')?.textContent,
-      PUBLICTIME:    r.querySelector('pubTime')?.textContent
-    }));
+    const data = await fetch(PROXY + encodeURIComponent(target))
+                      .then(r => r.json());
+    return data.SearchSTNTimeTableByIDService?.row || [];
   }
 
-  // D) 첫/막차 조회 (HTTP:8088)
+  // D) 첫/막차 조회 (JSON)
   async function getFirstLast(stationId, _, weekTag, updnLine) {
     const target =
-      `http://openapi.seoul.go.kr:8088/` +
-      `${FIRSTLAST_KEY}/xml/SearchFirstAndLastTrainbyLineServiceNew/1/5/` +
-      `${encodeURIComponent(selectedStation.lineNo + '호선')}/` +
+      `http://openapi.seoul.go.kr:8088/${FIRSTLAST_KEY}` +
+      `/json/SearchFirstAndLastTrainbyLineServiceNew/1/5/` +
+      `${encodeURIComponent(selectedStation.lineNo+'호선')}/` +
       `${weekTag}/${updnLine}/${stationId}`;
-    const res = await fetch(PROXY + encodeURIComponent(target));
-    const xml = await res.text();
-    const doc = new DOMParser().parseFromString(xml, 'application/xml');
-    const row = doc.querySelector('row');
+    const data = await fetch(PROXY + encodeURIComponent(target))
+                      .then(r => r.json());
+    const row = data.SearchFirstAndLastTrainbyLineServiceNew?.row?.[0];
     return row
-      ? {
-          firstTrain: row.querySelector('frstTrainTm')?.textContent || '-',
-          lastTrain:  row.querySelector('lstTrainTm')?.textContent  || '-'
-        }
-      : { firstTrain: '정보 없음', lastTrain: '정보 없음' };
+      ? { firstTrain: row.frstTrainTm, lastTrain: row.lstTrainTm }
+      : { firstTrain:'정보 없음',     lastTrain:'정보 없음' };
   }
 
   // 헬퍼
