@@ -1,7 +1,7 @@
-// ─── CORS 프록시 ─────────────────────────────────
-const PROXY = 'https://api.allorigins.win/raw?url=';
+// ─── CORS 프록시 (HTTPS) ───────────────────────────
+const PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
 
-// ─── API 키 설정 ─────────────────────────────────
+// ─── API 키 설정 ───────────────────────────────────
 const ARRIVAL_KEY   = '4a785a444d6e656f3132306e5371775a';
 const POSITION_KEY  = '586e44667a6e656f313030515263554e';
 const TIMETABLE_KEY = '514e4a7a636e656f39314d6c484969';
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const dirSelect   = document.getElementById('dirSelect');
   const resultDiv   = document.getElementById('result');
 
-  // 로컬 역정보 로드
+  // 로컬 stations.json 로드
   let stations = [];
   fetch('data/stations.json')
     .then(r => r.json())
@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(e => console.error('역정보 로드 실패', e));
 
   let selectedStation = { name:null, id:null, lineNo:null };
+  let timerId = null;
 
   // 1) 자동완성
   input.addEventListener('input', () => {
@@ -67,9 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const dir  = dirSelect.value;
     if (!name||!id||!lineNo) return;
 
+    // 이전 타이머 클리어
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+
     resultDiv.innerHTML = '로딩 중...';
     try {
-      // 4개 호출 병렬
       const [ fl, tt, arr, pos ] = await Promise.all([
         getFirstLast(id, lineNo, week, dir),
         getTimetable(id,  dir, week),
@@ -87,28 +93,46 @@ document.addEventListener('DOMContentLoaded', () => {
       html += `<h3>시간표</h3><ul>` +
         tt.slice(0,5).map(r=>
           `<li>${r.TRAIN_NO} → ${r.SUBWAY_STA_NM} ${r.PUBLICTIME}분</li>`
-        ).join('') + `</ul>`;
+        ).join('')+`</ul>`;
 
-      // 실시간 도착
+      // 실시간 도착 (data-seconds로 보관)
       html += `<h3>실시간 도착예정</h3><ul>` +
-        arr.slice(0,5).map(a=>
-          `<li>${a.trainLine} / ${Math.floor(a.leftTime/60)}분 ${a.leftTime%60}초 후</li>`
-        ).join('') + `</ul>`;
+        arr.slice(0,5).map(a=>{
+          const secs = a.leftTime;
+          return `<li>${a.trainLine} / <span class="arrival-time" data-seconds="${secs}">
+                    ${Math.floor(secs/60)}분 ${secs%60}초 후
+                  </span></li>`;
+        }).join('')+`</ul>`;
 
       // 실시간 위치
       html += `<h3>실시간 위치 (${lineNo}호선)</h3><ul>` +
         pos.slice(0,5).map(p=>
           `<li>차량 ${p.trainNo} → ${p.statnNm} (${p.direct==='0'?'상행':'하행'})</li>`
-        ).join('') + `</ul>`;
+        ).join('')+`</ul>`;
 
       resultDiv.innerHTML = html;
+
+      // ★ 카운트다운 타이머 시작
+      timerId = setInterval(() => {
+        document.querySelectorAll('.arrival-time').forEach(el => {
+          let secs = parseInt(el.dataset.seconds,10);
+          if (secs > 0) {
+            secs -= 1;
+            el.dataset.seconds = secs;
+            const m = Math.floor(secs/60);
+            const s = secs%60;
+            el.textContent = `${m}분 ${s}초 후`;
+          }
+        });
+      }, 1000);
+
     } catch(e) {
       console.error(e);
       resultDiv.innerHTML = `<span style="color:red;">오류: ${e.message}</span>`;
     }
   }
 
-  // ─── OpenAPI 호출 함수들 ─────────────────────────
+  // ─── OpenAPI 호출 함수들 ────────────────────────
 
   // A) 실시간 도착 (XML via proxy)
   async function getArrival(stationName){
@@ -119,12 +143,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const res = await fetch(PROXY + encodeURIComponent(target));
     const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml,'application/xml');
-    return Array.from(doc.querySelectorAll('row'))
-      .map(r=>({
-        trainLine:   r.querySelector('trainLineNm')?.textContent  || '-',
-        leftTime:    Number(r.querySelector('barvlDt')?.textContent) || 0,
-        prevStation: r.querySelector('bstatnNm')?.textContent      || '-'
-      }));
+    return Array.from(doc.querySelectorAll('row')).map(r=>({
+      trainLine:   r.querySelector('trainLineNm')?.textContent  || '-',
+      leftTime:    Number(r.querySelector('barvlDt')?.textContent) || 0,
+      prevStation: r.querySelector('bstatnNm')?.textContent      || '-'
+    }));
   }
 
   // B) 실시간 위치 (XML via proxy)
@@ -135,12 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const res = await fetch(PROXY + encodeURIComponent(target));
     const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml,'application/xml');
-    return Array.from(doc.querySelectorAll('row'))
-      .map(r=>({
-        trainNo: r.querySelector('trainNo')?.textContent || '-',
-        statnNm: r.querySelector('statnNm')?.textContent || '-',
-        direct:  r.querySelector('direct')?.textContent  || '-'
-      }));
+    return Array.from(doc.querySelectorAll('row')).map(r=>({
+      trainNo: r.querySelector('trainNo')?.textContent || '-',
+      statnNm: r.querySelector('statnNm')?.textContent || '-',
+      direct:  r.querySelector('direct')?.textContent  || '-'
+    }));
   }
 
   // C) 시간표 조회 (XML via proxy)
@@ -152,15 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const res = await fetch(PROXY + encodeURIComponent(target));
     const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml,'application/xml');
-    return Array.from(doc.querySelectorAll('row'))
-      .map(r=>({
-        TRAIN_NO:      r.querySelector('trainNo')?.textContent,
-        SUBWAY_STA_NM: r.querySelector('subwayStaNm')?.textContent,
-        PUBLICTIME:    r.querySelector('pubTime')?.textContent
-      }));
+    return Array.from(doc.querySelectorAll('row')).map(r=>({
+      TRAIN_NO:      r.querySelector('trainNo')?.textContent,
+      SUBWAY_STA_NM: r.querySelector('subwayStaNm')?.textContent,
+      PUBLICTIME:    r.querySelector('pubTime')?.textContent
+    }));
   }
 
-  // D) 첫/막차 조회 (XML via proxy, 없으면 “정보 없음”)
+  // D) 첫/막차 조회 (XML via proxy, 없으면 정보 없음)
   async function getFirstLast(stationId,lineNo,weekTag,updnLine){
     const lineName = encodeURIComponent(`${lineNo}호선`);
     const target =
