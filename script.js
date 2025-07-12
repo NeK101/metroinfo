@@ -1,5 +1,4 @@
-// ─── CORS 프록시 (HTTPS) ───────────────────────────
-const PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+const PROXY = 'https://YOUR_SITE.netlify.app/.netlify/functions/proxy?target=';
 
 // ─── API 키 설정 ───────────────────────────────────
 const ALL_ARRIVAL   = '4a785a444d6e656f3132306e5371775a'; // 실시간 도착(ALL)
