@@ -114,7 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // (A) 실시간 도착(ALL)
   async function getRealtimeArrivalAll(stationName) {
     const url = `https://swopenapi.seoul.go.kr/api/subway/${ALL_ARRIVAL}/xml/realtimeStationArrival/ALL`;
-    const res = await fetch(url), xml = await res.text();
+    const res = await fetch(url);
+    const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml,'application/xml');
     return Array.from(doc.querySelectorAll('row'))
       .filter(r => r.querySelector('statnNm')?.textContent === stationName)
@@ -128,7 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // (B) 실시간 위치
   async function getRealtimePosition(lineNo) {
     const url = `https://swopenapi.seoul.go.kr/api/subway/${POSITION_KEY}/xml/realtimePosition/0/100/${lineNo}`;
-    const res = await fetch(url), xml = await res.text();
+    const res = await fetch(url);
+    const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml,'application/xml');
     return Array.from(doc.querySelectorAll('row')).map(r => ({
       trainNo: r.querySelector('trainNo')?.textContent || '-',
@@ -137,10 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // (C) 시간표 조회
+  // (C) 시간표 조회 (HTTPS, 포트 삭제)
   async function getTimetableById(stationId, updnLine, weekTag) {
-    const url = `https://openapi.seoul.go.kr:8088/${TIMETABLE_KEY}/xml/SearchSTNTimeTableByIDService/1/100/${stationId}/${updnLine}/${weekTag}`;
-    const res = await fetch(url), xml = await res.text();
+    const url = `https://openapi.seoul.go.kr/${TIMETABLE_KEY}/xml/SearchSTNTimeTableByIDService/1/100/${stationId}/${updnLine}/${weekTag}`;
+    const res = await fetch(url);
+    const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml,'application/xml');
     return Array.from(doc.querySelectorAll('row')).map(r => ({
       TRAIN_NO:      r.querySelector('trainNo')?.textContent,
@@ -149,11 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  // (D) 첫/막차 조회
+  // (D) 첫/막차 조회 (HTTPS, 포트 삭제)
   async function getFirstLastByLine(stationId, lineNo, weekTag, updnLine) {
     const lineName = `${lineNo}호선`;
-    const url = `https://openapi.seoul.go.kr:8088/${FIRSTLAST_KEY}/xml/SearchFirstAndLastTrainbyLineServiceNew/1/5/${encodeURIComponent(lineName)}/${weekTag}/${updnLine}/${stationId}`;
-    const res = await fetch(url), xml = await res.text();
+    const url = `https://openapi.seoul.go.kr/${FIRSTLAST_KEY}/xml/SearchFirstAndLastTrainbyLineServiceNew/1/5/${encodeURIComponent(lineName)}/${weekTag}/${updnLine}/${stationId}`;
+    const res = await fetch(url);
+    const xml = await res.text();
     const doc = new DOMParser().parseFromString(xml,'application/xml');
     const row = doc.querySelector('row');
     if (!row) throw new Error('첫/막차 정보를 찾을 수 없습니다.');
