@@ -1,5 +1,4 @@
 // functions/proxy.js
-const fetch = require('node-fetch');
 
 exports.handler = async function(event) {
   const target = event.queryStringParameters?.target;
@@ -10,16 +9,18 @@ exports.handler = async function(event) {
       body: 'Missing target query parameter'
     };
   }
+
   try {
+    // Node.js18+ 에 내장된 fetch 사용
     const res  = await fetch(decodeURIComponent(target));
-    const body = await res.text();
+    const text = await res.text();
     return {
       statusCode: res.status,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Content-Type':        res.headers.get('content-type') || 'text/plain'
+        'Content-Type': res.headers.get('content-type') || 'text/plain'
       },
-      body
+      body: text
     };
   } catch (err) {
     return {
